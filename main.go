@@ -10,6 +10,8 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 	"github.com/joho/godotenv"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
 func main() {
@@ -19,9 +21,22 @@ func main() {
 	}
 
 	port := os.Getenv("PORT")
+	dbUrl := os.Getenv("DB_URL")//dsn
 	if port == "" {
 		log.Fatal("Port not found in environment")
 	}
+	db, err := gorm.Open(postgres.Open(dbUrl), &gorm.Config{})
+	if err != nil {
+		log.Fatal("Error connecting to database")
+	}
+	fmt.Println("Connected to database")
+
+	// Auto Migrate the User model
+	err = db.AutoMigrate(&User{})
+	if err != nil {
+		log.Fatal("Error migrating User model")
+	}
+	fmt.Println("Migration Completed")
 
 	r := chi.NewRouter()
 
@@ -35,9 +50,12 @@ func main() {
 	}))
 	r.Use(middleware.Logger)
 
+	app := &App{DB: db}
+
 	v1Router := chi.NewRouter()
-	v1Router.Get("/", handlerReadiness)
-	v1Router.Get("/error", handlerError)
+	v1Router.Get("/", app.handlerReadiness)
+	v1Router.Get("/error", app.handlerError)
+	v1Router.Post("/users/create", app.handlerCreateUser)
 	r.Mount("/v1", v1Router)
 
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
