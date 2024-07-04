@@ -4,6 +4,6 @@ import (
 	"net/http"
 )
 
-func handlerError(w http.ResponseWriter, r *http.Request) {
+func (app *App) handlerError(w http.ResponseWriter, r *http.Request) {
 	respondWithError(w, 400, "Someting Went Wrong!!")
 }
