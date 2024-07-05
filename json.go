@@ -12,7 +12,7 @@ type App struct {
 	DB *gorm.DB
 }
 
-func respondWithJSON(w http.ResponseWriter, status int, payload interface{}) {
+func RespondWithJSON(w http.ResponseWriter, status int, payload interface{}) {
 	data, err := json.Marshal(payload)
 	if err != nil {
 		log.Printf("Failed to marshal JSON response: %v", payload)
@@ -24,7 +24,7 @@ func respondWithJSON(w http.ResponseWriter, status int, payload interface{}) {
 	w.Write(data)
 }
 
-func respondWithError(w http.ResponseWriter, status int, msg string) {
+func RespondWithError(w http.ResponseWriter, status int, msg string) {
 	if status > 499 {
 		log.Println("Responding with 5XX error", msg)
 	}
@@ -33,7 +33,7 @@ func respondWithError(w http.ResponseWriter, status int, msg string) {
 		Error string `json:"error"`
 	}
 
-	respondWithJSON(w, status, errResponse{
+	RespondWithJSON(w, status, errResponse{
 		Error: msg,
 	})
 }
@@ -43,7 +43,7 @@ type UserResponse struct {
 	User    User   `json:"user"`
 }
 
-func createUserResponseJSON(user User, message string) UserResponse {
+func CreateUserResponseJSON(user User, message string) UserResponse {
 	return UserResponse{
 		Message: message,
 		User:    user,

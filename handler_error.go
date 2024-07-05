@@ -5,5 +5,5 @@ import (
 )
 
 func (app *App) handlerError(w http.ResponseWriter, r *http.Request) {
-	respondWithError(w, 400, "Someting Went Wrong!!")
+	RespondWithError(w, 400, "Someting Went Wrong!!")
 }

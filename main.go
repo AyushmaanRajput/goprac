@@ -10,6 +10,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 	"github.com/joho/godotenv"
+	"github.com/sirupsen/logrus"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -21,7 +22,7 @@ func main() {
 	}
 
 	port := os.Getenv("PORT")
-	dbUrl := os.Getenv("DB_URL")//dsn
+	dbUrl := os.Getenv("DB_URL")
 	if port == "" {
 		log.Fatal("Port not found in environment")
 	}
@@ -38,6 +39,13 @@ func main() {
 	}
 	fmt.Println("Migration Completed")
 
+	logrus.SetFormatter(&logrus.TextFormatter{
+		FullTimestamp: true,
+		ForceColors:   true,
+	})
+	logrus.SetOutput(os.Stdout)
+	logrus.SetLevel(logrus.InfoLevel)
+
 	r := chi.NewRouter()
 
 	r.Use(cors.Handler(cors.Options{
@@ -48,14 +56,19 @@ func main() {
 		AllowCredentials: false,
 		MaxAge:           300,
 	}))
-	r.Use(middleware.Logger)
+	r.Use(middleware.RequestLogger(&middleware.DefaultLogFormatter{
+		Logger: logrus.NewEntry(logrus.StandardLogger()),
+	}))
 
 	app := &App{DB: db}
 
 	v1Router := chi.NewRouter()
 	v1Router.Get("/", app.handlerReadiness)
 	v1Router.Get("/error", app.handlerError)
+	v1Router.Post("/auth/login", app.handlerLogin)
 	v1Router.Post("/users/create", app.handlerCreateUser)
+	// v1Router.Use(AuthMiddleware)
+	v1Router.Get("/users/{userId}", app.handleGetUserById)
 	r.Mount("/v1", v1Router)
 
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
